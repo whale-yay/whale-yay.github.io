@@ -31,28 +31,28 @@ https://e-words.jp/w/%E3%83%96%E3%83%BC%E3%83%88%E3%82%BB%E3%82%AF%E3%82%BF.html
 OSをインストールしたPCにApacheをインストールします。（なんだか癖でアパッチェって言ってしまう）
 [公式サイト](https://httpd.apache.org/docs/2.4/en/install.html)を参考
 ```Bash
-wget https://dlcdn.apache.org/httpd/httpd-2.4.54.tar.gz
-gzip -d httpd-2.4.54.tar.gz
-tar xvf httpd-2.4.54.tar
-cd httpd-2.4.54
-./configure
-make
-make install
-/bin/apaechectl -k start
+$ wget https://dlcdn.apache.org/httpd/httpd-2.4.54.tar.gz
+$ gzip -d httpd-2.4.54.tar.gz
+$ tar xvf httpd-2.4.54.tar
+$ cd httpd-2.4.54
+$ ./configure
+$ make
+$ make install
+$ /bin/apaechectl -k start
 ```
 
 #### gzip
-`man gzip`
+`man gzip` \
 GzipはLempel-Zivコーディングを用いてファイルの圧縮や展開を行う。拡張子は.gz。`gzip -d`ではDecompress(展開)を行う。
 
 #### tar
-参考　[tar](https://www.gnu.org/software/tar/)
-`tar xvf httpd-2.4.54.tar`
+参考　[tar](https://www.gnu.org/software/tar/) \
+`$ tar xvf httpd-2.4.54.tar` \
 GNU tarは複数のファイルを一つのファイルに纏めるソフトウェア（アーカイブする） \
 -x,　extract アーカイブを展開する。-v, verbose tarを実行しているファイルを表示する。vを増やすと詳細表示レベルが上がる。最大３。 -f, file アーカイブの内容を指定する
 
 #### cd
-`cd --help` \
+`$ cd --help` \
 指定したディレクトリにカレントディレクトリを移動させる。デフォルト（ディレクトリを指定しない）だとHOMEディレクトリに移動する。
 
 #### ./configure
@@ -64,20 +64,66 @@ configure:
 checking for APR... no
 configure: error: APR not found.  Please read the documentation.
 ```
-APRが見つからないそうなので、[インストール](https://apr.apache.org/)をする
+APRが見つからないそうなので、[インストール](https://apr.apache.org/)する
 ```
-wget https://dlcdn.apache.org//apr/apr-1.7.0.tar.gz
-gzip -d apr-1.7.0.tar.gz
-tar xvf apr-1.7.0.tar
-cd apr-1.7.0
-./configure
+$ wget https://dlcdn.apache.org//apr/apr-1.7.0.tar.gz
+$ gzip -d apr-1.7.0.tar.gz
+$ tar xvf apr-1.7.0.tar
+$ cd apr-1.7.0
+$ ./configure
 ```
-./configureでエラーが発生した。Cのコンパイラのパスが通ってないみたい。ここで`apt install build-essentials`するのを忘れていたことに気づく。\
+./configureでエラーが発生した。Cのコンパイラのパスが通ってないようです。Cがインストールここで`apt install build-essentials`するのを忘れていたことに気づく。\
 build-essentialsの中にAPRが含まれていないので、再度インストールを試みる。
 ```
-./configure
-make
-make install
+$ ./configure
+$ make
+$ make install
 ```
+`$ make install`でエラーが発生した。Permission deniedなのでsudoをつけて再実行する。 \
+`$ sudo make install` \
+APRのインストールが完了したので、apacheのconfigureを試みた \
+`./configure prefix=/usr/local/bin` \
+次はAPR-utilが無いと言われたので、こちらも[インストール](https://apr.apache.org/download.cgi)する \
+`configure: error: ARP-util not found. Please read the documentation`
+```
+$ wget https://dlcdn.apache.org//apr/apr-util-1.6.1.tar.gz
+$ gzip -d apr-util-1.6.1.tar.gz
+$ tar xvf apr-util-1.6.1.tar
+$ cd apr-util-1.6.1
+$ ./configure
+```
+APR-utilをconfigureする際に、`configure: error: ARP could not be located. Please use the --with-apr option`とエラーが発生した. \
+`./configure --help`からオプションの使い方を調べ、apr-configへのフルパスを指定して再実行 \
+```
+$ ./configre --with-apr=/usr/local/apr/bin/apr-1-config
+$ make
+```
+ARP-utilのmakeを行う際に`xml/apr_xml.c:35:10: fatal error: expat.h: No such file or directory`とエラーが発生した。[expatをインストール](https://github.com/libexpat/libexpat/releases)する
+```
+$ wget https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-2.5.0.tar.gz
+$ gzip -d expat-2.5.0.tar.gz
+$ tar xvf expat-2.5.0.tar
+$ cd expat-2.5.0
+```
+[公式リポジトリ](https://github.com/libexpat/libexpat)を元にインストールを進める
+```
+$ ./configure
+$ make
+$ sudo make install
+```
+expatのインストールが完了したので再度APR-utilをビルドする
+```
+$ cd ~/apr-util1.6.1
+$ make
+$ sudo make install
+```
+またまたApacheのConfigureを試みる
+```
+$ cd ~/httpd-2.5.54
+$ ./configure
+```
+またもやエラーが発生する。pcreが無いようです。エラーにあるサイトからインストールします \
+`configure: error: pcre(2)-config for libpcre not found. PCRE is required and available from http://pcre.org/`
+
 
 
