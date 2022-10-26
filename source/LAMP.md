@@ -20,6 +20,5 @@ PCを起動すると、BOISは記憶装置の先頭セクタ(MBR)を読み込む
 https://pctrouble.net/storage/bootsector.html \
 https://ja.wikipedia.org/wiki/%E8%BB%BD%E9%87%8FLinux%E3%83%87%E3%82%A3%E3%82%B9%E3%83%88%E3%83%AA%E3%83%93%E3%83%A5%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3 \
 https://pc-kaizen.com/difference-between-mbr-and-gpt \
-hhttps://e-words.jp/w/%E3%83%96%E3%83%BC%E3%83%88%E3%82%BB%E3%82%AF%E3%82%BF.html 
-
+https://e-words.jp/w/%E3%83%96%E3%83%BC%E3%83%88%E3%82%BB%E3%82%AF%E3%82%BF.html 
 
