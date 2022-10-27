@@ -141,7 +141,7 @@ GNU tarは複数のファイルを一つのファイルに纏めるソフトウ�
 `$ cd --help` \
 指定したディレクトリにカレントディレクトリを移動させる。デフォルト（ディレクトリを指定しない）だとHOMEディレクトリに移動する。
 
-#### ./configure
+#### Apacheのビルド
 ./configureを実行してソースツリーを構築する。今回はデフォルト設定で構築するためオプションはつけない。 \
 実行してみたところ、エラーが発生した。
 ```
@@ -165,11 +165,11 @@ $ ./configure
 $ make
 $ make install
 ```
-`$ make install`でエラーが発生した。Permission deniedなのでsudoをつけて再実行する。 \
+`$ make install`でエラーが発生した。Permission deniedなのでsudoをつけて再実行する。 
 ```
 $ sudo make install
 ```
-APRのインストールが完了したので、apacheのconfigureを試みた \
+APRのインストールが完了したので、apacheのconfigureを試みた 
 ```
 $ cd ~/httpd-2.4.54
 $ ./configure 
@@ -177,7 +177,7 @@ $ ./configure
 configure: error: ARP-util not found. Please read the documentation
 ```
 
-次はAPR-utilが無いと言われたので、こちらも[インストール](https://apr.apache.org/download.cgi)する \
+次はAPR-utilが無いと言われたので、こちらも[インストール](https://apr.apache.org/download.cgi)する 
 ```
 $ wget https://dlcdn.apache.org//apr/apr-util-1.6.1.tar.gz
 $ gzip -d apr-util-1.6.1.tar.gz
@@ -188,7 +188,7 @@ $ ./configure
 configure: error: ARP could not be located. Please use the --with-apr option
 ```
 APR-utilをconfigureする際にエラーが発生した. \
-`./configure --help`からオプションの使い方を調べ、apr-configへのフルパスを指定して再実行 \
+`./configure --help`からオプションの使い方を調べ、apr-configへのフルパスを指定して再実行 
 ```
 $ ./configre --with-apr=/usr/local/apr/bin/apr-1-config
 $ make
@@ -243,9 +243,8 @@ $ cd ~/httpd-2.4.54
 $ ./configure
 $ make
 $ sudo make install
-~~~略~~~
-
 ```
+Apacheのインストールが完了！！！
 #### Apacheを自動起動させる
 `man systemctl`を参考
 
