@@ -51,7 +51,7 @@ $ timedatectl status
 ```
 $ timedatectl timesync-status
 ```
-Serverがntp.ubuntu.comになっているのでntp1.jst.mfeed.ad.jpに変更する \
+Serverがntp.ubuntu.comになっているのでntp1.jst.mfeed.ad.jpに変更する 
 
 `man timedatectl`にある`timesync-status`には`Show current status of systemd-timesyncd.service`と書いてある。
 ```
@@ -245,8 +245,20 @@ $ make
 $ sudo make install
 ```
 Apacheのインストールが完了！！！
+#### Apacheのvirtualhostsを有効化する
+/local/usr/apache2/conf/httpd.confを編集する
+
 #### Apacheを自動起動させる
 `man systemctl`を参考
+
+
+
+
+
+### memo
+./configureはGNUのautoconfに沿って書かれている。 \
+`systemctl enable`で設定ファイルの変更を反映したいときは--nowか`systemctl start`を使う
+`systemsctl enable`はhookを作成するだけ(だいだいブート時)だが、`systemctl start`は実際にデーモンプロセスが生成される。
 
 # TODO
 SELinuxを無効(apparmor)
