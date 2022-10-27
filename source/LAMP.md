@@ -20,11 +20,71 @@ IP, ネットマスク,　ゲートウェイ, DNSを設定した。
 #### 反省点
 やけにインストールが遅いと思ったら、10年以上前のPCを使用していることに気づいた。より軽量なOSを検討するべきだった。
 
-#### 参考URL
+#### OSをインストールする際の参考URL
 https://pctrouble.net/storage/bootsector.html \
 https://ja.wikipedia.org/wiki/%E8%BB%BD%E9%87%8FLinux%E3%83%87%E3%82%A3%E3%82%B9%E3%83%88%E3%83%AA%E3%83%93%E3%83%A5%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3 \
 https://pc-kaizen.com/difference-between-mbr-and-gpt \
 https://e-words.jp/w/%E3%83%96%E3%83%BC%E3%83%88%E3%82%BB%E3%82%AF%E3%82%BF.html 
+
+#### タイムゾーン
+`man timedatactl`を参考に設定をすすめる。
+```
+$ timedatectl status
+              Local time: Thu 2022-10-27 05:06:17 UTC
+           Universal time: Thu 2022-10-27 05:06:17 UTC
+                 RTC time: Thu 2022-10-27 05:06:17
+                Time zone: Etc/UTC (UTC, +0000)
+System clock synchronized: yes
+              NTP service: active
+          RTC in local TZ: no
+```
+タイムゾーンがEtc/UTCになっているので、JSTに変更する
+```
+$ timedatectl list-timezones | grep J
+$ timedatectl set-timezone Japan
+$ timedatectl status
+```
+リストにJapanがあることを確認し、タイムゾーンをセット。`timedatectl status`でTime zoneがJSTになっていることを確認する \
+
+#### NTPサーバと時刻同期を行う
+`man timedatectl`を参考
+```
+$ timedatectl timesync-status
+```
+Serverがntp.ubuntu.comになっているのでntp1.jst.mfeed.ad.jpに変更する \
+
+`man timedatectl`にある`timesync-status`には`Show current status of systemd-timesyncd.service`と書いてある。
+```
+$ man systemd-timesyncd.service
+DESCRIPTION
+~~~略~~~
+The NTP servers contacted are determined from the global settings in timesyncd.conf(5),
+```
+timesyncd.confに設定が書いている用ですが、ファイルの場所がわからないので検索する
+```
+$ man find
+$ sudo find / -name "timesyncd.conf"
+$ cat /etc/systemd/timesyncd.conf
+~~~略~~~
+[Time]
+#NTP=
+#FallbackNTP=ntp.ubuntu.com
+~~~
+```
+ファイルを編集してNTPサーバを設定したあと、設定を反映させるためsystemd-timesyncd.serviceを再起動する。 \
+```
+$ vi /etc/systemd/timesyncd.conf
+[Time]
+NTP=ntp1.jst.mfeed.ad.jp
+$ timedatectl set-ntp false
+$ timedatectl set-ntp true
+$ timedatectl timesync-status
+Server: 210.173.160.27 (ntp1.jst.mfeed.ad.jp)
+```
+タイムゾーンをJST、NTPサーバをntp1.jst.mfeed.ad.jpに設定することができた。
+
+#### ファイヤウォール
+
 
 
 ## Apacheのインストール
@@ -46,8 +106,10 @@ $ /bin/apaechectl -k start
 GzipはLempel-Zivコーディングを用いてファイルの圧縮や展開を行う。拡張子は.gz。`gzip -d`ではDecompress(展開)を行う。
 
 #### tar
-参考　[tar](https://www.gnu.org/software/tar/) \
-`$ tar xvf httpd-2.4.54.tar` \
+参考　[tar公式リファレンス](https://www.gnu.org/software/tar/) \
+```
+$ tar xvf httpd-2.4.54.tar
+```
 GNU tarは複数のファイルを一つのファイルに纏めるソフトウェア（アーカイブする） \
 -x,　extract アーカイブを展開する。-v, verbose tarを実行しているファイルを表示する。vを増やすと詳細表示レベルが上がる。最大３。 -f, file アーカイブの内容を指定する
 
@@ -80,25 +142,36 @@ $ make
 $ make install
 ```
 `$ make install`でエラーが発生した。Permission deniedなのでsudoをつけて再実行する。 \
-`$ sudo make install` \
+```
+$ sudo make install
+```
 APRのインストールが完了したので、apacheのconfigureを試みた \
-`./configure prefix=/usr/local/bin` \
+```
+$ cd ~/httpd-2.4.54
+$ ./configure 
+~~~略~~~~
+configure: error: ARP-util not found. Please read the documentation
+```
+
 次はAPR-utilが無いと言われたので、こちらも[インストール](https://apr.apache.org/download.cgi)する \
-`configure: error: ARP-util not found. Please read the documentation`
 ```
 $ wget https://dlcdn.apache.org//apr/apr-util-1.6.1.tar.gz
 $ gzip -d apr-util-1.6.1.tar.gz
 $ tar xvf apr-util-1.6.1.tar
 $ cd apr-util-1.6.1
 $ ./configure
+~~~略~~~
+configure: error: ARP could not be located. Please use the --with-apr option
 ```
-APR-utilをconfigureする際に、`configure: error: ARP could not be located. Please use the --with-apr option`とエラーが発生した. \
+APR-utilをconfigureする際にエラーが発生した. \
 `./configure --help`からオプションの使い方を調べ、apr-configへのフルパスを指定して再実行 \
 ```
 $ ./configre --with-apr=/usr/local/apr/bin/apr-1-config
 $ make
+~~~略~~~
+xml/apr_xml.c:35:10: fatal error: expat.h: No such file or directory
 ```
-ARP-utilのmakeを行う際に`xml/apr_xml.c:35:10: fatal error: expat.h: No such file or directory`とエラーが発生した。[expatをインストール](https://github.com/libexpat/libexpat/releases)する
+ARP-utilのmakeを行う際にエラーが発生した。[expatをインストール](https://github.com/libexpat/libexpat/releases)する
 ```
 $ wget https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-2.5.0.tar.gz
 $ gzip -d expat-2.5.0.tar.gz
@@ -121,9 +194,10 @@ $ sudo make install
 ```
 $ cd ~/httpd-2.5.54
 $ ./configure
+~~~略~~~
+configure: error: pcre(2)-config for libpcre not found. PCRE is required and available from http://pcre.org/
 ```
-またもやエラーが発生する。pcreが無いようです。エラーにあるサイトからインストールします \
-`configure: error: pcre(2)-config for libpcre not found. PCRE is required and available from http://pcre.org/`
+またもやエラーが発生する。pcreが無いみたいなので、エラーにあるサイトからインストールします \
 
 
 
