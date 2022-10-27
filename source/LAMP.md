@@ -71,7 +71,7 @@ $ cat /etc/systemd/timesyncd.conf
 #FallbackNTP=ntp.ubuntu.com
 ~~~
 ```
-ファイルを編集してNTPサーバを設定したあと、設定を反映させるためsystemd-timesyncd.serviceを再起動する。 \
+ファイルを編集してNTPサーバを設定したあと、設定を反映させるためsystemd-timesyncd.serviceを再起動する。 
 ```
 $ vi /etc/systemd/timesyncd.conf
 [Time]
@@ -84,8 +84,23 @@ Server: 210.173.160.27 (ntp1.jst.mfeed.ad.jp)
 タイムゾーンをJST、NTPサーバをntp1.jst.mfeed.ad.jpに設定することができた。
 
 #### ファイヤウォール
+`$ man ufw`を参考にファイヤウォールを有効にする
+```
+$ ufw status
+ERROR: You need to be root to run this script
+```
+管理者権限で再実行する
+```
+$ sudo ufw status
+Status: inactive
+```
+非アクティブ状態を確認して、アクティブにする。
+```
+$ sudo ufw enable
+```
+`$ man ufw`より、`enable reloads fire wall and enables firewall on boot`とあるため、次回以降の起動では必要なさそう
 
-
+#### SELinuxを無効
 
 ## Apacheのインストール
 OSをインストールしたPCにApacheをインストールします。（なんだか癖でアパッチェって言ってしまう）
