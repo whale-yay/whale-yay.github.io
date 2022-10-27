@@ -44,7 +44,7 @@ $ timedatectl list-timezones | grep J
 $ timedatectl set-timezone Japan
 $ timedatectl status
 ```
-リストにJapanがあることを確認し、タイムゾーンをセット。`timedatectl status`でTime zoneがJSTになっていることを確認する \
+リストにJapanがあることを確認し、タイムゾーンをセット。`timedatectl status`でTime zoneがJSTになっていることを確認する 
 
 #### NTPサーバと時刻同期を行う
 `man timedatectl`を参考
@@ -60,7 +60,7 @@ DESCRIPTION
 ~~~略~~~
 The NTP servers contacted are determined from the global settings in timesyncd.conf(5),
 ```
-timesyncd.confに設定が書いている用ですが、ファイルの場所がわからないので検索する
+timesyncd.confに設定が書いている様ですが、ファイルの場所がわからないので検索する
 ```
 $ man find
 $ sudo find / -name "timesyncd.conf"
@@ -98,12 +98,21 @@ Status: inactive
 ```
 $ sudo ufw enable
 ```
-`$ man ufw`より、`enable reloads fire wall and enables firewall on boot`とあるため、次回以降の起動では必要なさそう
+`$ man ufw`より、`enable reloads fire wall and enables firewall on boot`とあるため、次回以降の起動では必要なさそう \
 
+手元のPCからSSHでサーバ機に接続していたが、
+```
+$ ssh **ip**
+ssh: connect to host **ip** port 22: Connecttion timed out
+```
+タイムアウトするようになったので、22番ポートを開放
+```
+$ sudo ufw allow 22
+```
 #### SELinuxを無効
 
 ## Apacheのインストール
-OSをインストールしたPCにApacheをインストールします。（なんだか癖でアパッチェって言ってしまう）
+OSをインストールしたPCにApacheをインストールします。（なんだか癖でアパッチェって言ってしまう） \
 [公式サイト](https://httpd.apache.org/docs/2.4/en/install.html)を参考
 ```Bash
 $ wget https://dlcdn.apache.org/httpd/httpd-2.4.54.tar.gz
@@ -207,12 +216,38 @@ $ sudo make install
 ```
 またまたApacheのConfigureを試みる
 ```
-$ cd ~/httpd-2.5.54
+$ cd ~/httpd-2.5.54/
 $ ./configure
 ~~~略~~~
 configure: error: pcre(2)-config for libpcre not found. PCRE is required and available from http://pcre.org/
 ```
-またもやエラーが発生する。pcreが無いみたいなので、エラーにあるサイトからインストールします \
+またもやエラーが発生する。pcreが無いみたいなので、エラーにある[サイト](http://pcre.org/)からインストールする \
+pcreの[github](https://github.com/PCRE2Project/pcre2)にも[公式リファレンス](http://pcre.org/current/doc/html/)にもインストールの方法が記載されていない。 \
+[README](http://pcre.org/readme.txt)の`Buliding PCRE2 using autotools`に載っていたため、実行する。
+```
+$ cd ~
+$ wget https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.40/pcre2-10.40.tar.gz
+$ gzip -d pcre2-10.40.tar.gz
+$ tar xvf pcre2-10.40.tar
+$ cd pcre2-10.40
+$ ./configure
+$ make
+$ make check
+$ sudo make install
+$ pcre2-config --version
+10.40
+```
+PCREのインストールが完了したので、ApacheのConfigureを試みる.
+```
+$ cd ~/httpd-2.4.54
+$ ./configure
+$ make
+$ sudo make install
+~~~略~~~
 
+```
+#### Apacheを自動起動させる
+`man systemctl`を参考
 
-
+# TODO
+SELinuxを無効(apparmor)
