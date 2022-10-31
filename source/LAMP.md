@@ -244,21 +244,135 @@ $ ./configure
 $ make
 $ sudo make install
 ```
-Apacheのインストールが完了！！！
+Apacheのインストールが完了！！！ \
+#### しっかりApacheがインストールされたか確認する
+```
+$ /usr/local/apache2/bin/apachectl -k start
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+(13)Permission denied: AH00072: make_sock: could not bind to address [::]:80
+(13)Permission denied: AH00072: make_sock: could not bind to address 0.0.0.0:80
+no listening sockets available, shutting down
+AH00015: Unable to open logs
+$ sudo /usr/local/apache2/bin/apachectl -k start
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+```
+`ServerName`が設定されていないが、127.0.1.1を代わりに使用しているので試してみる
+```
+$ curl 127.0.1.1
+<html><body><h1>It works!</h1></body></html>
+```
+正常にサーバが起動しているみたいです。
+
 #### Apacheのvirtualhostsを有効化する
-/local/usr/apache2/conf/httpd.confを編集する
+/usr/local/apache2/conf/httpd.confを編集する
+```
+$ cat /usr/local/apache2/conf/httpd.conf
+# Virtual hosts
+Include conf/extra/httpd-vhosts.conf
+```
+インクルードしている.confファイルも編集する。 ファイル内に記載がある[リファレンス](http://httpd.apache.org/docs/2.4/en/vhosts/)を参考に設定する。（日本語版は情報が古いらしいので英語版）
+```
+$ cat /usr/local/apache2/conf/extra/httpd-vhosts.conf
+<VirtualHost *:80>
+    ServerName tomishima-hbtask.local
+    DocumentRoot "/usr/local/apache2/htdocs/tomishima"
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerName yusuke-hbtask.local
+    DocumentRoot "/usr/local/apache2/htdocs/yusuke"
+</VirtualHost>
+```
+DocumentRootに設定したファイルを作成して、Apacheを再起動させる
+```
+$ sudo vi /usr/local/apache2/docs/tomishima.html
+$ sudo vi /usr/local/apache2/docs/yusuke.html
+$ sudo /usr/local/apache2/bin/apachectl -k stop
+$ sudo /usr/local/apache2/bin/apachectl -k start
+AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+$ curl 127.0.1.1
+<html><body><h1>It works!</h1></body></html>
+$ curl 127.0.1.2
+<html><body><h1>こんにちは。ありがとう。</h1></body></html>
+$ curl 127.0.1.3
+<html><body><h1>ありがとう。こんにちは。</h1></body></html>
+```
+メインサーバもVirtualHostもうまく動作しているみたいなので、つぎは名前解決がしたいです。 \ 
+Webに公開しないので、ローカルで`/etc/hosts`ファイルを編集します。[ubuntuマニュアル](https://manpages.ubuntu.com/manpages/impish/ja/man5/hosts.5.html)
+```
+$ cat /etc/hosts
+127.0.0.1 localhost
+127.0.1.2 tomishima-hbtask.local
+127.0.1.3 yusuke-hbtask.local
+
+$ curl yusuke-hbtask.local
+<html><body><h1>ありがとう。こんにちは。</h1></body></html>
+$ curl tomishima-hbtask.local
+<html><body><h1>こんにちは。ありがとう。</h1></body></html>
+```
 
 #### Apacheを自動起動させる
 `man systemctl`を参考
+enableするためにunitを作成する必要があるので、`man systemd.unit`を参考に作成する。 \
+Unit file load path tableからunitファイルを格納する場所を検討する。今回は`/etc/systemd/system`が良さそう。 \
+他の.serviceと比較しながらhttpd.serviceを記述していく(`systemd.unit`と`systemd.service`が参考になった)
+```
+$ cat /etc/systemd/system/httpd.service
+[Unit]
+Description=Apache2 server
 
+[Service]
+Type=simple
+ExecStart=/usr/local/apache2/bin/apachectl -k start
+ExecStop=/usr/local/apache2/bin/apachectl -k stop
 
-
-
-
+[Install]
+WantedBy=multi-user.target
+```
+早速systemctlで起動してみる。
+```
+$ systemctl start httpd.service
+$ curl 127.0.1.3
+curl: (7) Failed to connect to yusuke-hbtask.local port 80 after 0 ms: Connection refused
+$ systemctl status httpd.service
+Oct 31 18:16:46 hogetaro systemd[1]: Started Apache2 server.
+Oct 31 18:16:46 hogetaro apachectl[99861]: AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+Oct 31 18:16:46 hogetaro apachectl[99939]: AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message
+Oct 31 18:16:46 hogetaro systemd[1]: httpd.service: Deactivated successfully.
+```
+/usr/local/apache/conf/httpd.confにServerNameを設定してもう一度起動を試みる。
+```
+$ cat /usr/local/apache2/conf/httpd.conf
+~~~
+ServerName localhost:80
+~~~
+$ systemctl start httpd.service
+$ systemctl status httpd.service
+○ httpd.service - Apache2 server
+     Loaded: loaded (/etc/systemd/system/httpd.service; disabled; vendor preset: enabled)
+     Active: inactive (dead)
+Oct 31 18:16:46 systemd[1]: httpd.service: Deactivated successfully.
+Oct 31 18:20:49 systemd[1]: Started Apache2 server.
+Oct 31 18:20:49 systemd[1]: httpd.service: Deactivated successfully.
+```
+`httpd.service: DEACTIVATED successfully.`しがうまくいかない。 \
+起動はうまく行えているが、サーバが閉じてしまっている。`RemainAfterExit=yes`をhttpd.serviceに追記した。
+```
+$ sudo systemctl start httpd.service
+$ curl 127.0.1.3
+<html><body><h1>ありがとう。こんにちは。</h1></body></html>
+$ sudo systemctl stop httpd.service
+$ curl 127.0.1.3
+curl: (7) Failed to connect to 127.0.1.3 port 80 after 0 ms: Connection refused
+$ sudo systemctl enable httpd.service
+Created symlink /etc/systemd/system/multi-user.target.wants/httpd.service → /etc/systemd/system/httpd.service.
+```
+サーバの起動時にapacheが起動するようフックを作成することができた。 \
 ### memo
 ./configureはGNUのautoconfに沿って書かれている。 \
-`systemctl enable`で設定ファイルの変更を反映したいときは--nowか`systemctl start`を使う
-`systemsctl enable`はhookを作成するだけ(だいだいブート時)だが、`systemctl start`は実際にデーモンプロセスが生成される。
+`systemctl enable`で設定ファイルの変更を反映したいときは--nowか`systemctl start`を使う \
+`systemsctl enable`はhookを作成するだけ(だいだいブート時)だが、`systemctl start`は実際にデーモンプロセスが生成される。 \
+systemd.serviceの`WantedBy=multi-user.target`に関しては`man systemd.service`のExampleによく出ていたターゲットを指定しただけなので、他の`gretty.target`等との違いがわからない。要調査
 
 # TODO
 SELinuxを無効(apparmor)
