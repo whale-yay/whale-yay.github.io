@@ -273,12 +273,12 @@ Include conf/extra/httpd-vhosts.conf
 インクルードしている.confファイルも編集する。 ファイル内に記載がある[リファレンス](http://httpd.apache.org/docs/2.4/en/vhosts/)を参考に設定する。（日本語版は情報が古いらしいので英語版）
 ```
 $ cat /usr/local/apache2/conf/extra/httpd-vhosts.conf
-<VirtualHost *:80>
+<VirtualHost 127.0.1.2:80>
     ServerName tomishima-hbtask.local
     DocumentRoot "/usr/local/apache2/htdocs/tomishima"
 </VirtualHost>
 
-<VirtualHost *:80>
+<VirtualHost 127.0.1.3:80>
     ServerName yusuke-hbtask.local
     DocumentRoot "/usr/local/apache2/htdocs/yusuke"
 </VirtualHost>
