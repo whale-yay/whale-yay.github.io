@@ -374,5 +374,77 @@ Created symlink /etc/systemd/system/multi-user.target.wants/httpd.service → /e
 `systemsctl enable`はhookを作成するだけ(だいだいブート時)だが、`systemctl start`は実際にデーモンプロセスが生成される。 \
 systemd.serviceの`WantedBy=multi-user.target`に関しては`man systemd.service`のExampleによく出ていたターゲットを指定しただけなので、他の`gretty.target`等との違いがわからない。要調査
 
+## PHP インストール
+[PHP公式](https://www.php.net/manual/ja/install.unix.apache2.php)に則ってインストールを進める。 \
+[PHPのソース](https://www.php.net/downloads.php)をダウンロード
+
+```
+$ wget https://www.php.net/distributions/php-7.4.32.tar.gz
+$ gzip php-7.4.32.tar.gz
+$ tar xvf php-7.4.32.tar
+$ cd php-7.4.32
+$ ./configure --with-apxs2=/usr/local/apache2/bin/apxs --with-pdo-mysql
+configure: error: in `/home/hogetaro/php-7.4.32':
+configure: error: The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables LIBXML_CFLAGS
+and LIBXML_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+$ man pkg-config
+No manual entry for pkg-config
+```
+pkg-configが無い、またはパスが通っていないらしい。man pkg-configをしてみたが見当たらないので、エラーメッセージの[URL](https://gitlab.freedesktop.org/pkg-config/pkg-config/-/blob/master/README)からダウンロードする
+```
+$ wget https://pkgconfig.freedesktop.org/releases/pkg-config-0.29.2.tar.gz
+$ gzip pkg-config-0.29.2.tar.gz 
+$ tar xvf pkg-config-0.29.2.tar 
+```
+[githubのREADME](https://gitlab.freedesktop.org/pkg-config/pkg-config/-/blob/master/README)を読みながらインストールをすすめる \
+pkg-configのビルドはglibに依存していてglibのビルドはpkg-configに依存しているらしい。本来は環境変数をセットしたりいろいろするらしいが、面倒な場合は `--with-internal-glib`で最新版のglibを指定できる。（pkg-config内にバンドルコピー？が含まれているそうな）
+```
+$ cd pkg-config-0.29.2
+$ ./configure --with-internal-glib
+$ make
+$ make check
+$ sudo make install
+$ cd ~/php-7.4.32
+$ ./configure --with-apxs2=/usr/local/apache2/bin/apxs --with-pdo-mysql
+~~~
+configure: error: Package requirements (libxml-2.0 >= 2.7.6) were not met:
+
+No package 'libxml-2.0' found
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables LIBXML_CFLAGS
+and LIBXML_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+```
+pkg-configを標準でない方法でインストールした際はPKG_CONFIG_PATHを環境変数で指定したほうがいいらしい \
+また、足りない[libxml-2.0](https://gitlab.gnome.org/GNOME/libxml2/-/tree/master)をインストールする
+```
+$ which pkg-config
+$ export PKG_CONFIG_PATH=/usr/local/bin/pkg-config
+$ wget https://gitlab.gnome.org/GNOME/libxml2/-/archive/v2.10.3/libxml2-v2.10.3.tar.gz
+$ tar xf libxml2-v2.10.3.tar.gz
+$ cd libxml2-v2.10.3
+$ ./configure
+checking for python extension module directory (pyexecdir)... ${PYTHON_EXEC_PREFIX}/lib/python3.10/site-packages
+checking for PYTHON... no
+configure: error: Package requirements (python-3.10) were not met:
+
+No package 'python-3.10' found
+
+$ python3 --version
+Python 3.10.6
+```
+Python3.10がすでにインストールされているのに無いと言われる。
+原因究明中:wq
+
 # TODO
 SELinuxを無効(apparmor)
