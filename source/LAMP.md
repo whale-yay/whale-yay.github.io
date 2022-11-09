@@ -466,7 +466,9 @@ $ python3
 ['/usr/local/lib/python3.10/dist-packages', '/usr/lib/python3/dist-packages', '/usr/lib/python3.10/dist-packages']
 ```
 `dist-packages`しかないことがわかった。[debianのwiki](https://wiki.debian.org/Python)によると、
-> dist-packages instead of site-packages. Third party Python software installed from Debian packages goes into dist-packages, not site-packages. This is to reduce conflict between the system Python, and any from-source Python build you might install manually
+
+> dist-packages instead of site-packages. Third party Python software installed from Debian packages goes into dist-packages, not site-packages. This is to reduce conflict between the system Python, and any from-source Python build you might install manually \
+
 とあるので、python3.10をソースビルドして再度libxml2をconfigureする
 ```
 $ wget https://www.python.org/ftp/python/3.10.8/Python-3.10.8.tgz
