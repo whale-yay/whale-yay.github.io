@@ -530,10 +530,10 @@ LoadModule php7_module modules/libphp7.so
         SetHandler appication/x-httpd-php
 </FilesMatch>
 $ cat /usr/local/apache2/htdocs/tomishima/phpinfo.php
-<?php phpinfo(1); ?>
+<?php phpinfo(); ?>
 $ systemctl restart httpd
 $ curl tomishima-hbtask.local/phpinfo.php
-<?php phpinfo(1); ?>
+<?php phpinfo(); ?>
 ```
 モジュールの動的ロードができていない。apacheを再インストールする
 ```
