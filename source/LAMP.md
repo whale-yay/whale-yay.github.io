@@ -534,7 +534,6 @@ $ curl tomishima-hbtask.local/phpinfo.php
 <?php phpinfo(1); ?>
 ```
 モジュールの動的ロードができていない。apacheを再インストールする
-
 ```
 $ cd httpd-2.4.54
 $ ./configure --enable-so
