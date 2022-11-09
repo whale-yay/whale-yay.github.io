@@ -443,8 +443,108 @@ No package 'python-3.10' found
 $ python3 --version
 Python 3.10.6
 ```
-Python3.10がすでにインストールされているのに無いと言われる。
-原因究明中:wq
+Python3.10がすでにインストールされているのに無いと言われる。  \
+./configureにpythonがあることが伝わっていないかもしれない \
+`./configure --help`からpythonを指定する
+```
+$ which python3
+/usr/bin/python3
+$ ./configure --with-python-prefix=/usr/bin/python3
+~~
+checking for python extension module directory (pyexecdir)... ${PYTHON_EXEC_PREFIX}/lib/python3.10/site-packages
+checking for PYTHON... no
+configure: error: Package requirements (python-3.10) were not met:
 
+No package 'python-3.10' found
+```
+おなじエラーが出力された　\
+pythonのsite-packageを探しているときにエラーがでてるっぽいので、site-packagesの場所を確認してみる
+```
+$ python3
+>>> import site
+>>> site.getsitepakcages()
+['/usr/local/lib/python3.10/dist-packages', '/usr/lib/python3/dist-packages', '/usr/lib/python3.10/dist-packages']
+```
+`dist-packages`しかないことがわかった。[debianのwiki](https://wiki.debian.org/Python)によると、
+> dist-packages instead of site-packages. Third party Python software installed from Debian packages goes into dist-packages, not site-packages. This is to reduce conflict between the system Python, and any from-source Python build you might install manually
+とあるので、python3.10をソースビルドして再度libxml2をconfigureする
+```
+$ wget https://www.python.org/ftp/python/3.10.8/Python-3.10.8.tgz
+$ tar xf Python-3.10.8.tgz
+$ cd Python3.10.8
+$ ./configure
+$ make
+$ sudo make install
+$ cd ~/libxm2-2.10.3
+$ ./configure 
+$ make
+~~
+ここでいくつかのdeprecated warnが出るが、make checkでテストが通ったので多分大丈夫
+問題があったらここを見直す
+$ sudo make install
+```
+libxml2がインストールできたので、phpを再度configureする
+```
+$ ./configure --with-apxs2=/usr/local/apache2/bin/apxs --with-pdo-mysql
+checking for sqlite3 > 3.7.4... no
+configure: error: Package requirements (sqlite3 > 3.7.4) were not met:
+
+No package 'sqlite3' found
+```
+[sqlite3](https://www.sqlite.org/download.html)をインストールします
+```
+$ wget https://www.sqlite.org/2022/sqlite-autoconf-3390400.tar.gz
+$ tar xf sqlite-autoconf-3390400.tar.gz
+$ ./configure
+$ make
+$ sudo make install
+$ ./configure --with-apxs2=/usr/local/apache2/bin/apxs --with-pdo-mysql
+configure: error: Package requirements (zlib) were not met:
+
+No package 'zlib' found
+```
+[zlib](https://www.zlib.net/)をインストール
+```
+$ wget https://www.zlib.net/zlib-1.2.13.tar.gz
+$ tar xf zlib-1.2.13.tar.gz
+$ cd zlip-1.2.13.tar.gz
+$ ./configure
+$ make
+$ make check
+$ sudo make install
+$ cd ~/php-7.4.32
+$ ./configure --with-apxs2=/usr/local/apache2/bin/apxs --with-pdo-mysql
+$ make
+$ sudo make install
+```
+PHP公式のガイドに沿ってインストールを進める
+```
+$ sudo cp php.ini-development /usr/local/lib/php.ini
+$ cat /usr/local/apache2/conf/httpd.conf
+~~
+LoadModule php7_module modules/libphp7.so
+~~~
+<FilesMatch \.php$>
+        SetHandler appication/x-httpd-php
+</FilesMatch>
+$ cat /usr/local/apache2/htdocs/tomishima/phpinfo.php
+<?php phpinfo(1); ?>
+$ systemctl restart httpd
+$ curl tomishima-hbtask.local/phpinfo.php
+<?php phpinfo(1); ?>
+```
+モジュールの動的ロードができていない。apacheを再インストールする
+
+```
+$ cd httpd-2.4.54
+$ ./configure --enable-so
+$ make
+$ sudo make install
+$ systemctl restart httpd
+$ curl tomishima-hbtask.local/phpinfo.php
+~~phpinfoのhtml~~
+```
+PHPのインストールが完了した。
 # TODO
 SELinuxを無効(apparmor)
+mdが長すぎてよみずらいので分割する L A M P
