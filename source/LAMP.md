@@ -1,4 +1,4 @@
-# LAMP環境を構築
+#11 LAMP環境を構築
 
 ## 作業環境
 使用したPC: EPSON Endevor ST125E \
@@ -546,6 +546,50 @@ $ curl tomishima-hbtask.local/phpinfo.php
 ~~phpinfoのhtml~~
 ```
 PHPのインストールが完了した。
+
+## MySQLのインストール！
+MySQLのソースを[ダウンロード](https://www.php.net/distributions/php-8.1.12.tar.gz)する前に、ソースインストールの要件を[確認](https://dev.mysql.com/doc/refman/8.0/en/source-installation-prerequisites.html)する。\
+
+```
+$ make --version
+GNU Make 4.3
+Built for x86_64-pc-linux-gnu
+$ gcc --version
+gcc (Ubuntu 11.3.0-1ubuntu1~22.04) 11.3.0
+ $ openssl version
+OpenSSL 3.0.2 15 Mar 2022 (Library: OpenSSL 3.0.2 15 Mar 2022)
+
+```
+見つからなかったものをインストールする。(Cmake, C++ boost, ncurses) boostはMySQLのバージョンによって指定のバージョンをインストールする必要があったりする。基本は最新
+
+```
+$ wget https://github.com/Kitware/CMake/releases/download/v3.25.0/cmake-3.25.0.tar.gz
+$ tar xf cmake-3.25.0.tar.gz
+$ cd cmake-3.25.0
+$ ./bootstrap
+-- Could NOT find OpenSSL, try to set the path to OpenSSL root folder in the system variable OPENSSL_ROOT_DIR (missing: OPENSSL_CRYPTO_LIBRARY OPENSSL_INCLUDE_DIR) 
+CMake Error at Utilities/cmcurl/CMakeLists.txt:608 (message):
+  Could not find OpenSSL.  Install an OpenSSL development package or
+  configure CMake with -DCMAKE_USE_OPENSSL=OFF to build without OpenSSL.
+$ export OPENSSL_ROOT_DIR=/usr/bin/openssl
+$ ./bootstrap
+~~同じエラー~~
+```
+実行ファイルではビルドできない？原因はわからないがPythonのときもそうだったので、[公式](https://www.openssl.org/source/)から[インストール](https://github.com/openssl/openssl/blob/master/INSTALL.md#building-opensslk)してみる
+```
+$ wget https://www.openssl.org/source/openssl-3.0.7.tar.gz
+$ tar xf openssl-3.0.7.tar.gz
+$ cd openssl-3.0.7
+$ ./Configure
+$ make
+$ sudo make install
+```
+```
+$ cd ~/cmake-3.25.0
+$ ./bootstrap
+$ make
+$ sudo make install
+```
 # TODO
-SELinuxを無効(apparmor)
+SELinuxを無効(apparmor) \
 mdが長すぎてよみずらいので分割する L A M P
